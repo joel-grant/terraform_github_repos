@@ -10,9 +10,11 @@ This Terraform module creates and manages GitHub repositories with support for:
 
 ## Usage
 
+### Using from GitHub
+
 ```hcl
 module "my_repository" {
-  source = "./modules/github-repository"
+  source = "github.com/joel-grant/terraform_github_repos"
 
   name        = "my-awesome-repo"
   description = "An awesome repository"
@@ -39,6 +41,34 @@ module "my_repository" {
     "DOCKERHUB_TOKEN"    = var.dockerhub_token
     "RELEASE_TOKEN"      = var.release_token
   }
+}
+```
+
+### Using with a specific version
+
+```hcl
+module "my_repository" {
+  source = "github.com/joel-grant/terraform_github_repos?ref=v1.0.0"
+
+  name        = "my-awesome-repo"
+  description = "An awesome repository"
+  visibility  = "public"
+  
+  topics = ["terraform", "github", "automation"]
+}
+```
+
+### Using locally
+
+```hcl
+module "my_repository" {
+  source = "./terraform_github_repos"
+
+  name        = "my-awesome-repo"
+  description = "An awesome repository"
+  visibility  = "public"
+  
+  topics = ["terraform", "github", "automation"]
 }
 ```
 
