@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.0](https://github.com/joel-grant/terraform_github_repos/compare/v0.2.0...v1.0.0) (2025-07-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* prepare as module
+
+### Features
+
+* prepare as module ([397bbaf](https://github.com/joel-grant/terraform_github_repos/commit/397bbaffa122214017977a19dbc04b8c2c80d1a8))
+* prepare as module ([397bbaf](https://github.com/joel-grant/terraform_github_repos/commit/397bbaffa122214017977a19dbc04b8c2c80d1a8))
+* prepare as module ([fa32c38](https://github.com/joel-grant/terraform_github_repos/commit/fa32c386ace932ed7162ac4ff55fcfb4c47d7848))
+
 ## [0.2.0](https://github.com/joel-grant/terraform_github_repos/compare/v0.1.0...v0.2.0) (2025-07-17)
 
 
