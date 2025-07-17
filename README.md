@@ -8,6 +8,10 @@ This Terraform module creates and manages GitHub repositories with support for:
 - Repository environments
 - Repository-level and environment-level secrets
 
+## About
+
+This module is particularly useful for maintaining complex projects that require standardized repository configurations, environment management, and secret handling. I use this module across many of my projects that have significant complexity to ensure consistent setup and management of GitHub repositories, environments, and secrets.  Feel free to use as well or as a guide to understanding more about Terraform!
+
 ## Usage
 
 ### Using from GitHub
