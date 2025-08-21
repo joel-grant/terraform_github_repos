@@ -1,5 +1,7 @@
 # GitHub Repository Module
 
+> **Note**: This is a personal Terraform module that I (Joel Grant) use to manage my own GitHub repositories. It's shared publicly for educational purposes and as a reference for others learning Terraform and GitHub automation. Feel free to use it, fork it, or adapt it for your own needs!
+
 This Terraform module creates and manages GitHub repositories with support for:
 
 - Repository configuration (visibility, features, topics)
@@ -8,9 +10,11 @@ This Terraform module creates and manages GitHub repositories with support for:
 - Repository environments
 - Repository-level and environment-level secrets
 
-## About
+## About This Module
 
-This module is particularly useful for maintaining complex projects that require standardized repository configurations, environment management, and secret handling. I use this module across many of my projects that have significant complexity to ensure consistent setup and management of GitHub repositories, environments, and secrets.  Feel free to use as well or as a guide to understanding more about Terraform!
+This is my personal Terraform module that I use across many of my projects to maintain standardized repository configurations, environment management, and secret handling. It's particularly useful for complex projects that require consistent setup and management of GitHub repositories, environments, and secrets.
+
+Feel free to explore the code, ask questions, or adapt it for your own use cases!
 
 ## Usage
 
