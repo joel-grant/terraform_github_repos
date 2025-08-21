@@ -1,6 +1,6 @@
 # GitHub Repository Module
 
-> **Note**: This is a personal Terraform module that I (Joel Grant) use to manage my own GitHub repositories. It's shared publicly for educational purposes and as a reference for others learning Terraform and GitHub automation. Feel free to use it, fork it, or adapt it for your own needs!
+> **Note**: This is a personal Terraform module that I use to manage my own GitHub repositories. Feel free to use it, fork it, or adapt it for your own needs!
 
 This Terraform module creates and manages GitHub repositories with support for:
 
