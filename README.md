@@ -1,6 +1,6 @@
 # GitHub Repository Module
 
-> **Note**: This is a personal Terraform module that I use to manage my own GitHub repositories. Feel free to use it, fork it, or adapt it for your own needs!
+> **Note**: This is a personal Terraform module that I (Joel Grant) use to manage my own GitHub repositories. It's shared publicly for educational purposes and as a reference for others learning Terraform and GitHub automation. Feel free to use it, fork it, or adapt it for your own needs!
 
 This Terraform module creates and manages GitHub repositories with support for:
 
@@ -18,36 +18,126 @@ Feel free to explore the code, ask questions, or adapt it for your own use cases
 
 ## Usage
 
-### Using from GitHub
+The recommended approach is to use this module with `for_each` to manage multiple repositories from a single configuration, storing your repository definitions in a `tfvars` file.
+
+### Main Configuration (`main.tf`)
 
 ```hcl
-module "my_repository" {
+module "github_repositories" {
   source = "github.com/joel-grant/terraform_github_repos"
+  
+  for_each = var.repositories
 
-  name        = "my-awesome-repo"
-  description = "An awesome repository"
-  visibility  = "public"
-  
-  topics = ["terraform", "github", "automation"]
-  
-  environments = {
-    production = {
-      secrets = {
-        "API_KEY"      = var.production_api_key
-        "DATABASE_URL" = var.production_database_url
+  name        = each.key
+  description = each.value.description
+  visibility  = each.value.visibility
+  is_template = try(each.value.is_template, false)
+  has_issues  = try(each.value.has_issues, true)
+  has_wiki    = try(each.value.has_wiki, true)
+  has_projects = try(each.value.has_projects, true)
+  topics      = try(each.value.topics, [])
+  pages       = try(each.value.pages, null)
+  template    = try(each.value.template, null)
+  environments = try(each.value.environments, {})
+  repository_secrets = try(each.value.repository_secrets, {})
+}
+```
+
+### Variables Definition (`variables.tf`)
+
+```hcl
+variable "repositories" {
+  description = "Map of repositories to create"
+  type = map(object({
+    description        = string
+    visibility         = string
+    is_template        = optional(bool, false)
+    has_issues         = optional(bool, true)
+    has_wiki           = optional(bool, true)
+    has_projects       = optional(bool, true)
+    topics             = optional(list(string), [])
+    pages              = optional(object({
+      source = object({
+        branch = string
+        path   = optional(string, "/")
+      })
+      build_type = optional(string, "workflow")
+      cname      = optional(string)
+    }))
+    template = optional(object({
+      owner      = string
+      repository = string
+    }))
+    environments = optional(map(object({
+      secrets = optional(map(string), {})
+    })), {})
+    repository_secrets = optional(map(string), {})
+  }))
+  default = {}
+}
+```
+
+### Repository Configuration (`terraform.tfvars`)
+
+```hcl
+repositories = {
+  "my-awesome-app" = {
+    description = "My awesome web application"
+    visibility  = "public"
+    topics      = ["react", "nodejs", "terraform"]
+    environments = {
+      production = {
+        secrets = {
+          "DATABASE_URL" = "prod-database-connection-string"
+          "API_KEY"      = "prod-api-key"
+        }
+      }
+      staging = {
+        secrets = {
+          "DATABASE_URL" = "staging-database-connection-string"
+          "API_KEY"      = "staging-api-key"
+        }
       }
     }
-    staging = {
-      secrets = {
-        "API_KEY"      = var.staging_api_key
-        "DATABASE_URL" = var.staging_database_url
-      }
+    repository_secrets = {
+      "DOCKERHUB_TOKEN" = "dockerhub-access-token"
+      "NPM_TOKEN"       = "npm-publish-token"
     }
   }
   
-  repository_secrets = {
-    "DOCKERHUB_TOKEN"    = var.dockerhub_token
-    "RELEASE_TOKEN"      = var.release_token
+  "terraform-modules" = {
+    description = "Collection of reusable Terraform modules"
+    visibility  = "public"
+    topics      = ["terraform", "infrastructure", "modules"]
+    has_wiki    = false
+  }
+  
+  "documentation-site" = {
+    description = "Project documentation website"
+    visibility  = "public"
+    topics      = ["documentation", "gatsby", "markdown"]
+    pages = {
+      source = {
+        branch = "main"
+        path   = "/docs"
+      }
+      build_type = "workflow"
+    }
+  }
+  
+  "private-api" = {
+    description = "Internal API service"
+    visibility  = "private"
+    topics      = ["api", "golang", "microservice"]
+    environments = {
+      production = {
+        secrets = {
+          "DB_PASSWORD"    = "super-secret-prod-password"
+          "JWT_SECRET"     = "jwt-signing-secret"
+          "REDIS_URL"      = "redis://prod-redis:6379"
+        }
+      }
+    }
   }
 }
 ```
@@ -55,29 +145,24 @@ module "my_repository" {
 ### Using with a specific version
 
 ```hcl
-module "my_repository" {
+module "github_repositories" {
   source = "github.com/joel-grant/terraform_github_repos?ref=v1.0.0"
-
-  name        = "my-awesome-repo"
-  description = "An awesome repository"
-  visibility  = "public"
   
-  topics = ["terraform", "github", "automation"]
+  for_each = var.repositories
+  # ... rest of configuration
 }
 ```
 
 ### Using locally
 
 ```hcl
-module "my_repository" {
+module "github_repositories" {
   source = "./terraform_github_repos"
-
-  name        = "my-awesome-repo"
-  description = "An awesome repository"
-  visibility  = "public"
   
-  topics = ["terraform", "github", "automation"]
+  for_each = var.repositories
+  # ... rest of configuration
 }
+```
 ```
 
 ## Inputs
