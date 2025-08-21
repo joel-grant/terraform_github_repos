@@ -18,9 +18,11 @@ Feel free to explore the code, ask questions, or adapt it for your own use cases
 
 ## Usage
 
-The recommended approach is to use this module with `for_each` to manage multiple repositories from a single configuration, storing your repository definitions in a `tfvars` file.
+### Recommended: Managing Multiple Repositories with `for_each`
 
-### Main Configuration (`main.tf`)
+The recommended approach is to use this module with `for_each` to manage multiple repositories from a single configuration, storing your repository definitions in a `tfvars` file. This approach scales well and keeps your configuration DRY.
+
+#### Main Configuration (`main.tf`)
 
 ```hcl
 module "github_repositories" {
@@ -43,7 +45,7 @@ module "github_repositories" {
 }
 ```
 
-### Variables Definition (`variables.tf`)
+#### Variables Definition (`variables.tf`)
 
 ```hcl
 variable "repositories" {
@@ -77,7 +79,7 @@ variable "repositories" {
 }
 ```
 
-### Repository Configuration (`terraform.tfvars`)
+#### Repository Configuration (`terraform.tfvars`)
 
 ```hcl
 repositories = {
@@ -142,25 +144,87 @@ repositories = {
 }
 ```
 
-### Using with a specific version
+### Alternative: Single Repository Usage
+
+For simple use cases or when managing just one repository, you can use the module directly:
+
+#### Using from GitHub
 
 ```hcl
+module "my_repository" {
+  source = "github.com/joel-grant/terraform_github_repos"
+
+  name        = "my-awesome-repo"
+  description = "An awesome repository"
+  visibility  = "public"
+  
+  topics = ["terraform", "github", "automation"]
+  
+  environments = {
+    production = {
+      secrets = {
+        "API_KEY"      = var.production_api_key
+        "DATABASE_URL" = var.production_database_url
+      }
+    }
+    staging = {
+      secrets = {
+        "API_KEY"      = var.staging_api_key
+        "DATABASE_URL" = var.staging_database_url
+      }
+    }
+  }
+  
+  repository_secrets = {
+    "DOCKERHUB_TOKEN"    = var.dockerhub_token
+    "RELEASE_TOKEN"      = var.release_token
+  }
+}
+```
+
+#### Using with a specific version
+
+```hcl
+# For multiple repositories (recommended)
 module "github_repositories" {
   source = "github.com/joel-grant/terraform_github_repos?ref=v1.0.0"
   
   for_each = var.repositories
   # ... rest of configuration
 }
+
+# For single repository
+module "my_repository" {
+  source = "github.com/joel-grant/terraform_github_repos?ref=v1.0.0"
+
+  name        = "my-awesome-repo"
+  description = "An awesome repository"
+  visibility  = "public"
+  
+  topics = ["terraform", "github", "automation"]
+}
 ```
 
-### Using locally
+#### Using locally
 
 ```hcl
+# For multiple repositories (recommended)
 module "github_repositories" {
   source = "./terraform_github_repos"
   
   for_each = var.repositories
   # ... rest of configuration
+}
+
+# For single repository
+module "my_repository" {
+  source = "./terraform_github_repos"
+
+  name        = "my-awesome-repo"
+  description = "An awesome repository"
+  visibility  = "public"
+  
+  topics = ["terraform", "github", "automation"]
 }
 ```
 ```
