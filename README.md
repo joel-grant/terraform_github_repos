@@ -1,6 +1,6 @@
 # GitHub Repository Module
 
-> **Note**: This is a personal Terraform module that I use to manage my own GitHub repositories. It's shared publicly for educational purposes and as a reference for others learning Terraform and GitHub automation. Feel free to use it, fork it, or adapt it for your own needs!
+> **Note**: DEMO PROJECT - Used for learning/experimenting with Terraform and sharing ideas with others.
 
 This Terraform module creates and manages GitHub repositories with support for:
 
@@ -9,10 +9,11 @@ This Terraform module creates and manages GitHub repositories with support for:
 - GitHub Pages configuration
 - Repository environments
 - Repository-level and environment-level secrets
+- Webhooks
 
 ## About This Module
 
-This is my personal Terraform module that I use across many of my projects to maintain standardized repository configurations, environment management, and secret handling. It's particularly useful for complex projects that require consistent setup and management of GitHub repositories, environments, and secrets.
+This is my personal Terraform module that I use across many of my projects to maintain standardized repository configurations, environment management, and secret handling. I use it as much to manage my many projects as I do to learn and advance my knowledge and hands-on experience with Terraform.
 
 Feel free to explore the code, ask questions, or adapt it for your own use cases!
 
@@ -42,6 +43,7 @@ module "github_repositories" {
   template    = try(each.value.template, null)
   environments = try(each.value.environments, {})
   repository_secrets = try(each.value.repository_secrets, {})
+  webhooks    = try(each.value.webhooks, {})
 }
 ```
 
@@ -63,8 +65,6 @@ variable "repositories" {
         branch = string
         path   = optional(string, "/")
       })
-      build_type = optional(string, "workflow")
-      cname      = optional(string)
     }))
     template = optional(object({
       owner      = string
@@ -74,6 +74,14 @@ variable "repositories" {
       secrets = optional(map(string), {})
     })), {})
     repository_secrets = optional(map(string), {})
+    webhooks = optional(map(object({
+      url          = string
+      content_type = optional(string, "json")
+      insecure_ssl = optional(bool, false)
+      secret       = optional(string)
+      events       = list(string)
+      active       = optional(bool, true)
+    })), {})
   }))
   default = {}
 }
@@ -105,6 +113,65 @@ repositories = {
       "DOCKERHUB_TOKEN" = "dockerhub-access-token"
       "NPM_TOKEN"       = "npm-publish-token"
     }
+    # Simple webhook example
+    webhooks = {
+      "slack-notifications" = {
+        url    = "https://hooks.slack.com/services/xxx/yyy/zzz"
+        events = ["push", "pull_request", "release"]
+      }
+    }
+  }
+
+  "fully-configured-repo" = {
+    description = "Repository with comprehensive webhook configuration"
+    visibility  = "private"
+    topics      = ["example", "webhooks"]
+    
+    # Full webhook configuration with all options
+    # See: https://docs.github.com/en/webhooks/webhook-events-and-payloads
+    webhooks = {
+      # CI/CD pipeline trigger
+      "ci-pipeline" = {
+        url          = "https://ci.example.com/webhook"
+        content_type = "json"           # "json" (default) or "form"
+        secret       = "WEBHOOK_SECRET" # Optional: for payload verification
+        insecure_ssl = false            # Default: false
+        active       = true             # Default: true
+        events       = [
+          "push",                       # Any git push
+          "pull_request",               # PR opened, closed, synchronized, etc.
+          "workflow_run",               # GitHub Actions workflow completed
+        ]
+      }
+      
+      # Slack/Discord notifications
+      "team-notifications" = {
+        url    = "https://hooks.slack.com/services/xxx/yyy/zzz"
+        events = [
+          "issues",                     # Issue opened, edited, closed
+          "issue_comment",              # Comment on issue or PR
+          "pull_request_review",        # PR review submitted
+          "pull_request_review_comment",# Comment on PR diff
+          "release",                    # Release published, created, etc.
+          "deployment_status",          # Deployment succeeded/failed
+        ]
+      }
+      
+      # Security monitoring
+      "security-alerts" = {
+        url          = "https://security.example.com/github-webhook"
+        content_type = "json"
+        secret       = "SECURITY_WEBHOOK_SECRET"
+        events       = [
+          "branch_protection_rule",     # Branch protection changed
+          "code_scanning_alert",        # Code scanning alert
+          "dependabot_alert",           # Dependabot vulnerability alert
+          "repository_vulnerability_alert", # Security advisory
+          "secret_scanning_alert",      # Secret detected in code
+          "security_advisory",          # Security advisory published
+        ]
+      }
+    }
   }
   
   "terraform-modules" = {
@@ -123,7 +190,6 @@ repositories = {
         branch = "main"
         path   = "/docs"
       }
-      build_type = "workflow"
     }
   }
   
@@ -143,6 +209,162 @@ repositories = {
   }
 }
 ```
+
+#### Webhook Events Reference
+
+For a complete list of available webhook events, see the [GitHub Webhook Events documentation](https://docs.github.com/en/webhooks/webhook-events-and-payloads).
+
+**Commonly used events:**
+
+| Event | Description |
+|-------|-------------|
+| `push` | Any push to a repository |
+| `pull_request` | Pull request opened, closed, synchronized, reopened, etc. |
+| `release` | Release created, published, edited, deleted |
+| `issues` | Issue opened, edited, deleted, closed, reopened, etc. |
+| `issue_comment` | Comment on an issue or pull request |
+| `workflow_run` | GitHub Actions workflow run requested or completed |
+| `deployment` | Deployment created |
+| `deployment_status` | Deployment status updated |
+| `create` | Branch or tag created |
+| `delete` | Branch or tag deleted |
+
+**Security-related events:**
+
+| Event | Description |
+|-------|-------------|
+| `branch_protection_rule` | Branch protection rule created, edited, or deleted |
+| `code_scanning_alert` | Code scanning alert created, fixed, etc. |
+| `dependabot_alert` | Dependabot alert created, dismissed, fixed, etc. |
+| `secret_scanning_alert` | Secret scanning alert created, resolved, etc. |
+| `repository_vulnerability_alert` | Security vulnerability alert |
+
+**Collaboration events:**
+
+| Event | Description |
+|-------|-------------|
+| `pull_request_review` | Pull request review submitted, edited, dismissed |
+| `pull_request_review_comment` | Comment on pull request diff |
+| `pull_request_review_thread` | Pull request review thread resolved/unresolved |
+| `discussion` | Discussion created, edited, answered, etc. |
+| `discussion_comment` | Comment on a discussion |
+| `star` | Repository starred or unstarred |
+| `watch` | User started watching repository |
+| `fork` | Repository forked |
+
+### Managing Secrets with Terraform Cloud
+
+When using Terraform Cloud (or HCP Terraform), you'll need a **variable map pattern** to reference secrets in your `tfvars` file. This is because Terraform's language doesn't allow `var.` references inside `.tfvars` files.
+
+#### The Problem
+
+```hcl
+# ❌ This does NOT work in terraform.tfvars
+repositories = {
+  "my-repo" = {
+    repository_secrets = {
+      "DOCKERHUB_TOKEN" = var.DOCKERHUB_TOKEN  # Variables not allowed here!
+    }
+  }
+}
+```
+
+#### The Solution: Variable Map Pattern
+
+Use string references in your `tfvars`, then resolve them to actual variable values in `main.tf`:
+
+##### Step 1: Define your secrets as Terraform Cloud variables
+
+In Terraform Cloud, create workspace variables or variable sets for your secrets (e.g., `DOCKERHUB_TOKEN`, `API_KEY`, etc.). Mark them as sensitive.
+
+##### Step 2: Create a variable map in `main.tf`
+
+```hcl
+locals {
+  # Map variable names (strings) to actual variable values
+  variable_map = {
+    "DOCKERHUB_TOKEN"   = var.DOCKERHUB_TOKEN
+    "NPM_TOKEN"         = var.NPM_TOKEN
+    "PRODUCTION_DB_URL" = var.PRODUCTION_DB_URL
+    "STAGING_DB_URL"    = var.STAGING_DB_URL
+    # Add all your Terraform Cloud variables here
+  }
+
+  # Transform repository secrets from string references to actual values
+  resolved_repositories = {
+    for repo_name, repo_config in var.repositories : repo_name => merge(repo_config, {
+      repository_secrets = {
+        for secret_name, variable_name in try(repo_config.repository_secrets, {}) :
+        secret_name => local.variable_map[variable_name]
+      }
+      environments = {
+        for env_name, env_config in try(repo_config.environments, {}) : env_name => {
+          secrets = {
+            for secret_name, variable_name in try(env_config.secrets, {}) :
+            secret_name => local.variable_map[variable_name]
+          }
+        }
+      }
+    })
+  }
+}
+
+# Use resolved_repositories instead of var.repositories
+module "github_repositories" {
+  source = "github.com/joel-grant/terraform_github_repos"
+  
+  for_each = local.resolved_repositories
+
+  name               = each.key
+  description        = each.value.description
+  visibility         = each.value.visibility
+  is_template        = try(each.value.is_template, false)
+  has_issues         = try(each.value.has_issues, true)
+  has_wiki           = try(each.value.has_wiki, true)
+  has_projects       = try(each.value.has_projects, true)
+  topics             = try(each.value.topics, [])
+  pages              = try(each.value.pages, null)
+  template           = try(each.value.template, null)
+  environments       = each.value.environments
+  repository_secrets = each.value.repository_secrets
+  webhooks           = try(each.value.webhooks, {})
+}
+```
+
+##### Step 3: Reference secrets by name in `terraform.tfvars`
+
+```hcl
+repositories = {
+  "my-app" = {
+    description = "My application"
+    visibility  = "private"
+    repository_secrets = {
+      # These are variable NAMES (strings), not actual values
+      "DOCKERHUB_TOKEN" = "DOCKERHUB_TOKEN"
+      "NPM_TOKEN"       = "NPM_TOKEN"
+    }
+    environments = {
+      production = {
+        secrets = {
+          "DATABASE_URL" = "PRODUCTION_DB_URL"  # References var.PRODUCTION_DB_URL
+        }
+      }
+      staging = {
+        secrets = {
+          "DATABASE_URL" = "STAGING_DB_URL"     # References var.STAGING_DB_URL
+        }
+      }
+    }
+  }
+}
+```
+
+#### Why This Pattern?
+
+- **Clean tfvars** — Repository configuration stays readable and declarative
+- **Secrets in Terraform Cloud** — Sensitive values never appear in your codebase
+- **Scalable** — Add new repositories by editing only `tfvars`
+- **Maintainable** — Adding a new secret only requires updating `variable_map`
 
 ### Alternative: Single Repository Usage
 
@@ -227,7 +449,6 @@ module "my_repository" {
   topics = ["terraform", "github", "automation"]
 }
 ```
-```
 
 ## Inputs
 
@@ -245,6 +466,7 @@ module "my_repository" {
 | template | Template repository configuration | `object` | `null` | no |
 | environments | Map of environments to create with their secrets | `map(object)` | `{}` | no |
 | repository_secrets | Map of repository-level secrets | `map(string)` | `{}` | no |
+| webhooks | Map of webhooks to create for the repository | `map(object)` | `{}` | no |
 
 ## Outputs
 
@@ -257,3 +479,4 @@ module "my_repository" {
 | repository_ssh_clone_url | The SSH clone URL of the repository |
 | repository_http_clone_url | The HTTP clone URL of the repository |
 | environments | Map of created environments |
+| webhooks | Map of created webhooks with their IDs and URLs |
