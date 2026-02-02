@@ -83,3 +83,16 @@ variable "repository_secrets" {
   type        = map(string)
   default     = {}
 }
+
+variable "webhooks" {
+  description = "Map of webhooks to create for the repository"
+  type = map(object({
+    url          = string
+    content_type = optional(string, "json")
+    insecure_ssl = optional(bool, false)
+    secret       = optional(string)
+    events       = list(string)
+    active       = optional(bool, true)
+  }))
+  default = {}
+}
