@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/joel-grant/terraform_github_repos/compare/v1.0.0...v1.1.0) (2026-02-02)
+
+
+### Features
+
+* add webhooks configuration ([c11efca](https://github.com/joel-grant/terraform_github_repos/commit/c11efca487dd9234920278a704637d6ef5c7193c))
+
 ## [1.0.0](https://github.com/joel-grant/terraform_github_repos/compare/v0.2.0...v1.0.0) (2025-07-17)
 
 
