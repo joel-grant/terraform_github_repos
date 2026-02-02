@@ -32,3 +32,13 @@ output "environments" {
   description = "Map of created environments"
   value       = { for k, v in github_repository_environment.environments : k => v.environment }
 }
+
+output "webhooks" {
+  description = "Map of created webhooks with their IDs and URLs"
+  value = { for k, v in github_repository_webhook.webhooks : k => {
+    id     = v.id
+    url    = v.url
+    active = v.active
+    events = v.events
+  }}
+}
